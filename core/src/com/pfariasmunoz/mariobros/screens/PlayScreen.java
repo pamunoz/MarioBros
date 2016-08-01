@@ -5,6 +5,7 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.maps.MapObject;
 import com.badlogic.gdx.maps.objects.RectangleMapObject;
 import com.badlogic.gdx.maps.tiled.TiledMap;
@@ -29,7 +30,10 @@ import com.pfariasmunoz.mariobros.tools.B2WorldCreator;
  * Created by Pablo Farias on 31-07-16.
  */
 public class PlayScreen implements Screen {
+    // Reference to our Game, used to set Screens
     private MarioBros game;
+    private TextureAtlas atlas;
+    // basic playscreen variables
     private OrthographicCamera gamecam;
     private Viewport gamePort;
     private Hud hud;
@@ -48,7 +52,7 @@ public class PlayScreen implements Screen {
 
     public PlayScreen(MarioBros game) {
 
-
+        atlas = new TextureAtlas("Mario_and_Enemies.pack");
 
         this.game = game;
         // create cam used to follow mario through cam world
@@ -70,10 +74,13 @@ public class PlayScreen implements Screen {
         b2dr = new Box2DDebugRenderer();
 
         new B2WorldCreator(world, map);
+        // create mario in our game world
+        player = new Mario(world, this);
 
-        player = new Mario(world);
+    }
 
-
+    public TextureAtlas getAtlas() {
+        return atlas;
     }
 
     public void handleInput(float dt) {
@@ -95,6 +102,8 @@ public class PlayScreen implements Screen {
         handleInput(dt);
 
         world.step(1/60f, 6, 2);
+
+        player.update(dt);
 
         gamecam.position.x = player.b2body.getPosition().x;
         // update our gamecam with correct coordinates after changes
@@ -121,6 +130,12 @@ public class PlayScreen implements Screen {
         renderer.render();
         //renderer our Box2DDebugLines
         b2dr.render(world, gamecam.combined);
+
+        game.batch.setProjectionMatrix(gamecam.combined);
+        game.batch.begin();
+        player.draw(game.batch);
+        game.batch.end();
+
         // Set our batch to now draw what the Hud camera sees.
         game.batch.setProjectionMatrix(hud.stage.getCamera().combined);
         hud.stage.draw();
